@@ -114,8 +114,60 @@ public class HttpsNoCertUtil {
         String repString= new String (buffer.toByteArray());
         return repString;
     }
+    public String post2(String urlString,Map<String, String> paramToMap) {
+        String p = urlString;
 
-    private String map2Url(Map<String, String> paramToMap) {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream(512);
+        try {
+            URL url = new URL(urlString);
+            /*
+             * use ignore host name verifier
+             */
+            HttpsURLConnection.setDefaultHostnameVerifier(ignoreHostnameVerifier);
+            HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(10000);
+            connection.addRequestProperty("Content-Type","application/x-www-form-urlencoded");
+            connection.setRequestMethod("GET");
+
+            // Prepare SSL Context
+            TrustManager[] tm = { ignoreCertificationTrustManger };
+            SSLContext sslContext = SSLContext.getInstance("SSL", "SunJSSE");
+            sslContext.init(null, tm, new java.security.SecureRandom());
+
+            // 从上述SSLContext对象中得到SSLSocketFactory对象
+            SSLSocketFactory ssf = sslContext.getSocketFactory();
+            connection.setSSLSocketFactory(ssf);
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
+            OutputStream out = connection.getOutputStream();
+//            out.write(p.getBytes("utf-8"));
+            out.flush();
+            out.close();
+
+            InputStream reader = connection.getInputStream();
+//            byte[] bytes = new byte[512];
+//            int length = reader.read(bytes);
+//
+//            do {
+//                buffer.write(bytes, 0, length);
+//                length = reader.read(bytes);
+//            } while (length > 0);
+//
+//            log.info(buffer.toString());
+            reader.close();
+
+            connection.disconnect();
+
+        } catch (Exception ex) {
+            log.error("", ex);
+        } finally {
+
+        }
+        String repString= new String (buffer.toByteArray());
+        return repString;
+    }
+    public String map2Url(Map<String, String> paramToMap) {
         if (null == paramToMap || paramToMap.isEmpty()) {
             return null;
         }
